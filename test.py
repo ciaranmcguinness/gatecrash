@@ -1,25 +1,3 @@
-from flask import Flask, render_template
-from itertools import product, combinations_with_replacement
-from functools import lru_cache
-
-
-def get_bits(n: int, width: int) -> list[bool]:
-    if n < 0:
-        raise ValueError("Only non-negative integers supported")
-
-    bits = [bit == "1" for bit in bin(n)[2:]]
-    if len(bits) > width:
-        raise ValueError(f"Width {width} is too small to represent {n}")
-    return [False] * (width - len(bits)) + bits
-
-def get_gate(inputs: int, n: int):
-    width = 2 ** inputs
-    gate = []
-    x = list(reversed(get_bits(n, width)))
-    for i in range(width):
-        gate.append((get_bits(i, inputs), x[i]))
-    return gate
-
 class LayeredTruthTable:
     def __init__(self, inputs: int):
         self.inputs = inputs
@@ -45,13 +23,18 @@ class LayeredTruthTable:
         if self.output_column == -1:
             raise ValueError("Output column not set")
         return self.table[self.output_column][sum([input_values[i] * (2 ** i) for i in range(self.inputs)])]
-
+    
 nand = LayeredTruthTable(2)
 nand.table.append([True, True, True, False])
 nand.output_column = 2
 
-app = Flask(__name__)
+print(nand.eval([False, False])) # True
+print(nand.eval([False, True])) # True
+print(nand.eval([True, False])) # True
+print(nand.eval([True, True])) # False
 
-@app.get("/")
-def index():
-    return render_template("index.html")
+a = LayeredTruthTable(2)
+a.apply_transform([0, 1], nand)
+a.apply_transform([2,2], nand)
+a.output_column = 3
+print(a.eval([True, True])) # True
